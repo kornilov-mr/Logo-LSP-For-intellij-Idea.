@@ -20,6 +20,8 @@ public class ConvertToAST {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         LogoParser parser = new LogoParser(tokens);
 
+        fileNode.functionDeclarations.clearUserFunctions();
+
         LogoSyntaxErrorCollector errorCollector = new LogoSyntaxErrorCollector();
         lexer.removeErrorListeners();
         lexer.addErrorListener(errorCollector);

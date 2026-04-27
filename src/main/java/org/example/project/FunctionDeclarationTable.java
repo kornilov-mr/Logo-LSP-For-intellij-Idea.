@@ -18,5 +18,8 @@ public class FunctionDeclarationTable {
     public void add(String name, FunctionDeclaration declaration){
         declarationsMap.put(name.toLowerCase(), declaration);
     }
+    public void clearUserFunctions(){
+        declarationsMap.clear();
+    }
 
 }
