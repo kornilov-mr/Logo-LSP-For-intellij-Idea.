@@ -1,0 +1,4 @@
+make "SIZE 100 + 400
+make "SIZE 100 + 400 + 500
+make "SIZE 100 + 400 + 500 + 600
+make "SIZE 100 * 100 * 100

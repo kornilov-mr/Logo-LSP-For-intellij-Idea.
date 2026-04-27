@@ -1,0 +1,5 @@
+ProgramNode{statements=[
+Declare(SIZE, BinaryExpr(100, +, 400)), 
+Declare(SIZE, BinaryExpr(BinaryExpr(100, +, 400), +, 500)), 
+Declare(SIZE, BinaryExpr(BinaryExpr(BinaryExpr(100, +, 400), +, 500), +, 600)), 
+Declare(SIZE, BinaryExpr(BinaryExpr(100, *, 100), *, 100))], parserErrors=[], staticErrors=[]}
