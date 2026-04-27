@@ -7,15 +7,15 @@ import java.io.IOException;
 
 /**
  * One test per error category handled by the parser / listener.
- *
+ * <p>
  * Grammar-level errors are collected by LogoSyntaxErrorCollector (ANTLR syntaxError callback)
  * and flushed into the program scope in exitProgram.
- *
+ * <p>
  * Semantic errors are injected as ErrorNode instances by LogoArityResolverListener during
  * arity resolution (resolveSpecialForm, resolveFixedArity, consumeBlock).
- *
+ * <p>
  * Error coverage map:
- *
+ * <p>
  *  errGrammarUnexpectedToken    → ANTLR reports unexpected '+' token
  *  errGrammarUnclosedList       → ANTLR reports missing ']'
  *  errGrammarMissingEnd         → ANTLR reports missing 'end' for procedure

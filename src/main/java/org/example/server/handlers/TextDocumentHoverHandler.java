@@ -3,6 +3,7 @@ package org.example.server.handlers;
 import org.example.communication.requests.HoverParams;
 import org.example.communication.responses.HoverResult;
 import org.example.project.FileNode;
+import org.example.project.HoverFormatter;
 import org.example.project.ProjectContext;
 import org.example.project.ast.ASTNode;
 import org.example.project.ast.ProgramNode;
@@ -44,6 +45,6 @@ public class TextDocumentHoverHandler extends LSPHandler<HoverParams, HoverResul
         FileNode fileNode = ProjectContext.getFileNode(hoverParams.textDocument.uri);
         ProgramNode programNode = fileNode.programNode;
         ASTNode node = programNode.getNodesInSpan(hoverParams.position);
-        return new HoverResult(node.toString());
+        return new HoverResult(HoverFormatter.format(node, fileNode));
     }
 }

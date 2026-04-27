@@ -14,7 +14,7 @@ public class LogoLSPServer {
     private static final MessageDispatcher dispatcher = new MessageDispatcher();
     private final Logger logger = Logger.getLogger(String.valueOf(LogoLSPServer.class));
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         LogoLSPServer server = new LogoLSPServer();
         server.start();
     }

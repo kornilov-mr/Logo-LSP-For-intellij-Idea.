@@ -1,7 +1,6 @@
 package org.example.communication.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.example.communication.DTO.DiagnosticOptions;
 
 public class ServerCapabilities extends org.example.communication.LSPAny {
     @JsonProperty("positionEncoding")

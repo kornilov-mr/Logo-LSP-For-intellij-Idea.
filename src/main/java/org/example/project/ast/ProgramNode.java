@@ -10,8 +10,8 @@ import java.util.List;
 
 public class ProgramNode extends ASTNode {
     public final List<ASTNode> statements;
-    public List<ErrorNode> parserErrors = new ArrayList<>();
-    public List<ErrorNode> staticErrors = new ArrayList<>();
+    public final List<ErrorNode> parserErrors = new ArrayList<>();
+    public final List<ErrorNode> staticErrors = new ArrayList<>();
 
     public ProgramNode(Range range, List<ASTNode> statements) {
         super(range);

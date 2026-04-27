@@ -1,7 +1,6 @@
 package org.example.server;
 
 import org.example.communication.LSPAny;
-import org.example.communication.NoResponse;
 import org.example.communication.ResponseErrorsCode;
 import org.example.communication.requests.LSPRequestWrapper;
 import org.example.communication.responses.LSPResponseError;

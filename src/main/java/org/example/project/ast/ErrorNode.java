@@ -1,6 +1,5 @@
 package org.example.project.ast;
 
-import org.antlr.v4.runtime.Token;
 import org.example.communication.DTO.Range;
 
 public class ErrorNode extends ASTNode {

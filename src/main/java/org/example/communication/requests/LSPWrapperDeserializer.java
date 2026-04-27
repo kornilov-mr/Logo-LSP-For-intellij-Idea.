@@ -13,7 +13,7 @@ import java.io.IOException;
 
 public class LSPWrapperDeserializer extends JsonDeserializer<LSPRequestWrapper> {
     @Override
-    public LSPRequestWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public LSPRequestWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode root = p.getCodec().readTree(p);
 
         String jsonRpcVersion = root.path("jsonrpc").asText("2.0");
