@@ -15,6 +15,7 @@ public class FunctionDeclaration {
     public final Kind kind;
     public final int arity;
     public Range range;
+    public String description;
 
 
     public FunctionDeclaration(String name, int arity, Kind kind) {

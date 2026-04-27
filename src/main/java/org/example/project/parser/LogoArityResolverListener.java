@@ -18,12 +18,12 @@ import java.util.List;
  * The {@code LogoArityResolverListener} class is responsible for analyzing the syntax tree of a
  * Logo program and resolving function and procedure calls based on their arity and context. It extends
  * the {@code LogoBaseListener} class to provide custom handling of grammar rules during the parsing process.
- *
+ * <p>
  * This class maintains state during parsing, including a stack for intermediate computations and tables
  * for tracking function declarations and resolving their arguments. It also handles error detection for
  * malformed or invalid constructs, ensuring that the syntax tree accurately represents the source program,
  * even in the presence of errors.
- *
+ * <p>
  * State Tracking:
  * - {@code functionDeclarationTable}: Tracks the declarations of functions and procedures in the program.
  * - {@code stack}: Holds intermediate nodes during parsing for procedural and expression resolution.
@@ -31,7 +31,7 @@ import java.util.List;
  * - {@code pendingParenExprs}: Tracks parenthesized expressions that have not yet been fully resolved.
  * - {@code errors}: Collects error information during syntax tree traversal.
  * - {@code procedureDepth}: Tracks the nesting level of procedures to manage scope-specific behavior.
- *
+ * <p>
  * Primary Responsibilities:
  * - Resolves arity-based argument counts for fixed and variable arity functions.
  * - Constructs abstract syntax tree (AST) nodes for expressions, procedures, and special forms.
@@ -42,6 +42,7 @@ import java.util.List;
 public class LogoArityResolverListener extends LogoBaseListener {
 
     private final FunctionDeclarationTable functionDeclarationTable;
+    private final List<String> sourceLines;
 
     // Scope stack: each frame collects the ASTNodes produced by its statements.
     private final Deque<List<ASTNode>> stack = new ArrayDeque<>();
@@ -58,8 +59,9 @@ public class LogoArityResolverListener extends LogoBaseListener {
     // Tracks nesting depth to detect nested procedure definitions.
     private int procedureDepth = 0;
 
-    public LogoArityResolverListener(FunctionDeclarationTable functionDeclarationTable) {
+    public LogoArityResolverListener(FunctionDeclarationTable functionDeclarationTable, List<String> sourceLines) {
         this.functionDeclarationTable = functionDeclarationTable;
+        this.sourceLines = sourceLines;
     }
 
     public ProgramNode getResult() {
@@ -92,6 +94,7 @@ public class LogoArityResolverListener extends LogoBaseListener {
             Range span = rangeOf(ctx.start, ctx.stop);
             ErrorNode error = new ErrorNode("Nested procedure definitions are not allowed", span);
             errors.add(error);
+            assert stack.peek() != null;
             stack.peek().add(error);
         }
         stack.push(new ArrayList<>());
@@ -118,12 +121,14 @@ public class LogoArityResolverListener extends LogoBaseListener {
         }
 
         Range spanFun = rangeOf(ctx.start, ctx.stop);
+        fillProcedureDescription(name, spanFun);
         int blockStart = parameters.isEmpty() ? ctx.IDENTIFIER().getSymbol().getCharPositionInLine() + name.length()+1: parameters.getLast().getSpan().start.character+1;
         Range spanBlock = new Range(new Position(spanFun.start.line, blockStart), spanFun.end);
         Range nameRange = ctx.IDENTIFIER() != null
                 ? rangeOf(ctx.IDENTIFIER().getSymbol(), ctx.IDENTIFIER().getSymbol())
                 : null;
         BlockNode body = new BlockNode(bodyStatements, spanBlock);
+        assert stack.peek() != null;
         stack.peek().add(new ProcedureDeclarationNode(name, parameters, body, spanFun, nameRange));
     }
 
@@ -151,6 +156,7 @@ public class LogoArityResolverListener extends LogoBaseListener {
         BlockNode block = new BlockNode(body, span);
 
         if (ctx.parent instanceof LogoParser.StatementContext) {
+            assert stack.peek() != null;
             stack.peek().add(block);
         } else {
             // Part of an atom inside an expression — queue so resolveTerm picks
@@ -181,6 +187,7 @@ public class LogoArityResolverListener extends LogoBaseListener {
         List<LogoParser.AtomContext> atoms = ctx.atom();
         int[] idx = {0};
         while (idx[0] < atoms.size()) {
+            assert stack.peek() != null;
             stack.peek().add(resolveTerm(atoms, idx));
         }
     }
@@ -286,79 +293,82 @@ public class LogoArityResolverListener extends LogoBaseListener {
         idx[0]++; // consume keyword
 
         String nameLower = name.toLowerCase();
-        if (nameLower.equals("repeat")) {
-            // Error 14: list where count expected  →  repeat [forward 100]
-            if (idx[0] < atoms.size() && atoms.get(idx[0]).list() != null) {
-                Range errSpan = spanFrom(atoms, start, idx);
-                ErrorNode error = new ErrorNode("Expected repeat count before '['", errSpan);
-                this.errors.add(error);
-                stack.peek().add(error);
+        switch (nameLower) {
+            case "repeat" -> {
+                // Error 14: list where count expected  →  repeat [forward 100]
+                if (idx[0] < atoms.size() && atoms.get(idx[0]).list() != null) {
+                    Range errSpan = spanFrom(atoms, start, idx);
+                    ErrorNode error = new ErrorNode("Expected repeat count before '['", errSpan);
+                    this.errors.add(error);
+                    assert stack.peek() != null;
+                    stack.peek().add(error);
+                    BlockNode body = consumeBlock(atoms, idx, start);
+                    ErrorNode error2 = new ErrorNode("Missing count", errSpan);
+                    return new RepeatNode(
+                            error2,
+                            body, spanFrom(atoms, start, idx));
+                }
+                ASTNode count = resolveTerm(atoms, idx);
                 BlockNode body = consumeBlock(atoms, idx, start);
-                ErrorNode error2 = new ErrorNode("Missing count", errSpan);
-                return new RepeatNode(
-                        error2,
-                        body, spanFrom(atoms, start, idx));
+                return new RepeatNode(count, body, spanFrom(atoms, start, idx));
             }
-            ASTNode count = resolveTerm(atoms, idx);
-            BlockNode body = consumeBlock(atoms, idx, start);
-            return new RepeatNode(count, body, spanFrom(atoms, start, idx));
-        }
+            case "if" -> {
+                ASTNode condition = resolveTerm(atoms, idx);
+                BlockNode thenBranch = consumeBlock(atoms, idx, start); // Error 12 detected inside
 
-        if (nameLower.equals("if")) {
-            ASTNode condition = resolveTerm(atoms, idx);
-            BlockNode thenBranch = consumeBlock(atoms, idx, start); // Error 12 detected inside
-            return new IfNode(spanFrom(atoms, start, idx), condition, thenBranch);
-        }
-
-        if (nameLower.equals("ifelse")) {
-            ASTNode condition = resolveTerm(atoms, idx);
-            BlockNode thenBranch = consumeBlock(atoms, idx, start); // Error 12 detected inside
-            BlockNode elseBranch = consumeBlock(atoms, idx, start); // Error 13 detected inside
-            return new IfElseNode(spanFrom(atoms, start, idx), condition, thenBranch, elseBranch);
-        }
-
-        if (nameLower.equals("while")) {
-            ASTNode condition = resolveTerm(atoms, idx);
-            BlockNode body = consumeBlock(atoms, idx, start); // Error 12 detected inside
-            return new WhileNode(spanFrom(atoms, start, idx), condition, body);
-        }
-
-        if (nameLower.equals("make")) {
-            // Error 8: nothing at all after make
-            if (idx[0] >= atoms.size()) {
-                ErrorNode error = new ErrorNode("Expected variable name after 'make'", spanFrom(atoms, start, idx));
-                this.errors.add(error);
-                return error;
+                return new IfNode(spanFrom(atoms, start, idx), condition, thenBranch);
             }
-            LogoParser.AtomContext nameAtom = atoms.get(idx[0]);
-            // Error 9: not a quoted word or variable reference
-            if (nameAtom.QUOTED_WORD() == null && nameAtom.VARIABLE() == null) {
+            case "ifelse" -> {
+                ASTNode condition = resolveTerm(atoms, idx);
+                BlockNode thenBranch = consumeBlock(atoms, idx, start); // Error 12 detected inside
+
+                BlockNode elseBranch = consumeBlock(atoms, idx, start); // Error 13 detected inside
+
+                return new IfElseNode(spanFrom(atoms, start, idx), condition, thenBranch, elseBranch);
+            }
+            case "while" -> {
+                ASTNode condition = resolveTerm(atoms, idx);
+                BlockNode body = consumeBlock(atoms, idx, start); // Error 12 detected inside
+
+                return new WhileNode(spanFrom(atoms, start, idx), condition, body);
+            }
+            case "make" -> {
+                // Error 8: nothing at all after make
+                if (idx[0] >= atoms.size()) {
+                    ErrorNode error = new ErrorNode("Expected variable name after 'make'", spanFrom(atoms, start, idx));
+                    this.errors.add(error);
+                    return error;
+                }
+                LogoParser.AtomContext nameAtom = atoms.get(idx[0]);
+                // Error 9: not a quoted word or variable reference
+                if (nameAtom.QUOTED_WORD() == null && nameAtom.VARIABLE() == null) {
+                    idx[0]++;
+                    if (idx[0] < atoms.size()) resolveTerm(atoms, idx); // discard the value token
+                    ErrorNode error = new ErrorNode("Expected variable name (\"name or :name) after 'make', got '"
+                            + nameAtom.getText() + "'",
+                            rangeOf(nameAtom.getStart(), nameAtom.getStop()));
+                    this.errors.add(error);
+                    return error;
+                }
+                String fullName = nameAtom.getText();
+                if (fullName.charAt(0) != '"') {
+                    ErrorNode error = new ErrorNode("\" expected before variable name", spanFrom(atoms, start, idx));
+                    this.errors.add(error);
+                    return error;
+                }
+                String varName = extractVarName(nameAtom);
                 idx[0]++;
-                if (idx[0] < atoms.size()) resolveTerm(atoms, idx); // discard the value token
-                ErrorNode error = new ErrorNode("Expected variable name (\"name or :name) after 'make', got '"
-                        + nameAtom.getText() + "'",
-                        rangeOf(nameAtom.getStart(), nameAtom.getStop()));
-                this.errors.add(error);
-                return error;
+                // Error 10: variable name present but no value follows (on same line)
+                if (idx[0] >= atoms.size()
+                        || atoms.get(idx[0]).getStart().getLine() != atoms.get(start).getStart().getLine()) {
+                    ErrorNode error = new ErrorNode("Expected value after variable name in 'make'", spanFrom(atoms, start, idx));
+                    this.errors.add(error);
+                    return error;
+                }
+                ASTNode value = resolveTerm(atoms, idx);
+                Range varNameRange = rangeOf(nameAtom.getStart(), nameAtom.getStop());
+                return new VariableDeclaration(varName, value, spanFrom(atoms, start, idx), varNameRange);
             }
-            String fullName = nameAtom.getText();
-            if(fullName.charAt(0) != '"' ) {
-                ErrorNode error = new ErrorNode("\" expected before variable name", spanFrom(atoms, start, idx));
-                this.errors.add(error);
-                return error;
-            }
-            String varName = extractVarName(nameAtom);
-            idx[0]++;
-            // Error 10: variable name present but no value follows (on same line)
-            if (idx[0] >= atoms.size()
-                    || atoms.get(idx[0]).getStart().getLine() != atoms.get(start).getStart().getLine()) {
-                ErrorNode error = new ErrorNode("Expected value after variable name in 'make'", spanFrom(atoms, start, idx));
-                this.errors.add(error);
-                return error;
-            }
-            ASTNode value = resolveTerm(atoms, idx);
-            Range varNameRange = rangeOf(nameAtom.getStart(), nameAtom.getStop());
-            return new VariableDeclaration(varName, value, spanFrom(atoms, start, idx), varNameRange);
         }
 
         // Special form with no dedicated AST node (forever, for, …)
@@ -382,6 +392,7 @@ public class LogoArityResolverListener extends LogoBaseListener {
                 : atoms.get(Math.max(0, idx[0] - 1)).getStop();
         ErrorNode error = new ErrorNode("Expected '['", rangeOf(errToken, errToken));
         this.errors.add(error);
+        assert stack.peek() != null;
         stack.peek().add(error);
         return new BlockNode(new ArrayList<>(), spanFrom(atoms, start, idx));
     }
@@ -437,6 +448,30 @@ public class LogoArityResolverListener extends LogoBaseListener {
         }
 
         return new CallNode(name, args, spanFrom(atoms, start, idx));
+    }
+
+    // -------------------------------------------------------------------------
+    // Procedure description
+    // -------------------------------------------------------------------------
+
+    private void fillProcedureDescription(String name, Range spanFun) {
+        FunctionDeclaration decl = functionDeclarationTable.getFunctionDeclaration(name);
+        if (decl == null || decl.kind != FunctionDeclaration.Kind.USER) return;
+        int startLine = spanFun.start.line;
+        int endLine   = spanFun.end.line;
+        int previewEnd = Math.min(startLine + 4, endLine);
+        StringBuilder sb = new StringBuilder();
+        for (int i = startLine; i <= previewEnd && i < sourceLines.size(); i++) {
+            String line = sourceLines.get(i);
+            if (line.endsWith("\r")) line = line.substring(0, line.length() - 1);
+            sb.append(line).append("\n");
+        }
+        if (previewEnd < endLine) {
+            sb.append("...");
+        } else {
+            if (!sb.isEmpty()) sb.deleteCharAt(sb.length() - 1); // trim trailing \n
+        }
+        decl.description = sb.toString();
     }
 
     // -------------------------------------------------------------------------

@@ -25,7 +25,7 @@ import java.util.List;
  * This class builds on the {@link LSPHandler} framework and provides the specific implementation of the
  * {@link #handle(SemanticTokensParams)} method, delegating the actual token extraction and encoding to
  * utility methods.
- *
+ * <p>
  * Specific responsibilities of this class include:
  * - Traversing the program's AST to identify relevant tokens.
  * - Categorizing tokens based on their type (e.g., function, variable, keyword).
@@ -63,72 +63,60 @@ public class TextDocumentSemanticTokensFullHandler extends LSPHandler<SemanticTo
     private void collectToken(List<int[]> tokens, ASTNode node) {
         Range span = node.getSpan();
 
-        if (node instanceof CallNode callNode) {
-            add(tokens, span.start.line, span.start.character, callNode.name.length(), TYPE_FUNCTION, MOD_DECLARATION);
-
-        } else if (node instanceof FunctionRef funcRef) {
-            add(tokens, span.start.line, span.start.character,
+        switch (node) {
+            case CallNode callNode ->
+                    add(tokens, span.start.line, span.start.character, callNode.name.length(), TYPE_FUNCTION, MOD_DECLARATION);
+            case FunctionRef _ -> add(tokens, span.start.line, span.start.character,
                     span.end.character - span.start.character, TYPE_FUNCTION, MOD_DECLARATION);
-
-        } else if (node instanceof ProcedureDeclarationNode procDecl) {
-            // 'to' keyword
-            add(tokens, span.start.line, span.start.character, "to".length(), TYPE_KEYWORD, 0);
-            // procedure name (exact position from parser)
-            if (procDecl.nameRange != null) {
-                Range nr = procDecl.nameRange;
-                add(tokens, nr.start.line, nr.start.character,
-                        nr.end.character - nr.start.character, TYPE_FUNCTION, MOD_DECLARATION);
+            case ProcedureDeclarationNode procDecl -> {
+                // 'to' keyword
+                add(tokens, span.start.line, span.start.character, "to".length(), TYPE_KEYWORD, 0);
+                // procedure name (exact position from parser)
+                if (procDecl.nameRange != null) {
+                    Range nr = procDecl.nameRange;
+                    add(tokens, nr.start.line, nr.start.character,
+                            nr.end.character - nr.start.character, TYPE_FUNCTION, MOD_DECLARATION);
+                }
+                // parameter declarations in the header line
+                for (ParameterNode param : procDecl.parameters) {
+                    Range pr = param.getSpan();
+                    if (pr != null) {
+                        add(tokens, pr.start.line, pr.start.character,
+                                pr.end.character - pr.start.character, 1, 2);
+                    }
+                }
+                // 'end' keyword: span.end.character points past the last char of END
+                add(tokens, span.end.line, span.end.character - "end".length(), "end".length(), TYPE_KEYWORD, 0);
             }
-            // parameter declarations in the header line
-            for (ParameterNode param : procDecl.parameters) {
-                Range pr = param.getSpan();
-                if (pr != null) {
-                    add(tokens, pr.start.line, pr.start.character,
-                            pr.end.character - pr.start.character+3, TYPE_PARAMETER, 2);
+            case VariableDeclaration varDecl -> {
+                // 'make' keyword
+                add(tokens, span.start.line, span.start.character, "make".length(), TYPE_KEYWORD, 0);
+                // variable name: nameRange covers the sigil + name (e.g. "foo or :foo), skip 1 char
+                if (varDecl.nameRange != null) {
+                    Range nr = varDecl.nameRange;
+                    add(tokens, nr.start.line, nr.start.character,
+                            varDecl.variableName.length() + 1, TYPE_VARIABLE, 2);
                 }
             }
-            // 'end' keyword: span.end.character points past the last char of END
-            add(tokens, span.end.line, span.end.character - "end".length(), "end".length(), TYPE_KEYWORD, 0);
-
-        } else if (node instanceof VariableDeclaration varDecl) {
-            // 'make' keyword
-            add(tokens, span.start.line, span.start.character, "make".length(), TYPE_KEYWORD, 0);
-            // variable name: nameRange covers the sigil + name (e.g. "foo or :foo), skip 1 char
-            if (varDecl.nameRange != null) {
-                Range nr = varDecl.nameRange;
-                add(tokens, nr.start.line, nr.start.character,
-                        varDecl.variableName.length()+1, TYPE_VARIABLE, 2);
-            }
-
-        } else if (node instanceof VariableRefNode varRef) {
-            add(tokens, span.start.line, span.start.character,
+            case VariableRefNode _ -> add(tokens, span.start.line, span.start.character,
                     span.end.character - span.start.character, TYPE_VARIABLE, 2);
-
-        } else if (node instanceof NumberNode) {
-            add(tokens, span.start.line, span.start.character,
+            case NumberNode _ -> add(tokens, span.start.line, span.start.character,
                     span.end.character - span.start.character, TYPE_NUMBER, 0);
-
-        } else if (node instanceof WordLiteral) {
-            add(tokens, span.start.line, span.start.character,
+            case WordLiteral _ -> add(tokens, span.start.line, span.start.character,
                     span.end.character - span.start.character, TYPE_STRING, 0);
-
-        } else if (node instanceof RepeatNode) {
-            add(tokens, span.start.line, span.start.character, "repeat".length(), TYPE_KEYWORD, 0);
-
-        } else if (node instanceof IfElseNode) {
-            add(tokens, span.start.line, span.start.character, "ifelse".length(), TYPE_KEYWORD, 0);
-
-        } else if (node instanceof IfNode) {
-            add(tokens, span.start.line, span.start.character, "if".length(), TYPE_KEYWORD, 0);
-
-        } else if (node instanceof WhileNode) {
-            add(tokens, span.start.line, span.start.character, "while".length(), TYPE_KEYWORD, 0);
-
-        } else if (node instanceof BinaryExpressionNode binExpr) {
-            add(tokens, span.start.line, span.start.character, binExpr.operator.length(), TYPE_OPERATOR, 0);
-
-        } else if (node instanceof UnaryExpressionNode unaryExpr) {
-            add(tokens, span.start.line, span.start.character, unaryExpr.operator.length(), TYPE_OPERATOR, 0);
+            case RepeatNode _ ->
+                    add(tokens, span.start.line, span.start.character, "repeat".length(), TYPE_KEYWORD, 0);
+            case IfElseNode _ ->
+                    add(tokens, span.start.line, span.start.character, "ifelse".length(), TYPE_KEYWORD, 0);
+            case IfNode _ -> add(tokens, span.start.line, span.start.character, "if".length(), TYPE_KEYWORD, 0);
+            case WhileNode _ ->
+                    add(tokens, span.start.line, span.start.character, "while".length(), TYPE_KEYWORD, 0);
+            case BinaryExpressionNode binExpr ->
+                    add(tokens, span.start.line, span.start.character, binExpr.operator.length(), TYPE_OPERATOR, 0);
+            case UnaryExpressionNode unaryExpr ->
+                    add(tokens, span.start.line, span.start.character, unaryExpr.operator.length(), TYPE_OPERATOR, 0);
+            default -> {
+            }
         }
     }
 

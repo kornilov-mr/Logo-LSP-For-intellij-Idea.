@@ -12,11 +12,14 @@ public class SemanticTokensOptions extends LSPAny {
     @JsonProperty("full")
     public boolean full;
 
+    @JsonProperty
+    public boolean range;
     @JsonCreator
     public SemanticTokensOptions(
             @JsonProperty("legend") SemanticTokensLegend legend,
-            @JsonProperty("full") boolean full) {
+            @JsonProperty("full") boolean full, @JsonProperty("range") boolean range) {
         this.legend = legend;
         this.full = full;
+        this.range = range;
     }
 }

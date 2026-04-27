@@ -30,13 +30,13 @@ public class ConvertToAST {
         StaticAnalyzer staticAnalyzer = new StaticAnalyzer();
 
         LogoArityResolverListener listener =
-                new LogoArityResolverListener(fileNode.functionDeclarations);
+                new LogoArityResolverListener(fileNode.functionDeclarations, fileNode.contentLines);
 
         ParseTreeWalker.DEFAULT.walk(listener, tree);
         ProgramNode programNode = listener.getResult();
         programNode.parserErrors.addAll(errorCollector.getErrors());
 
-        programNode.staticErrors = staticAnalyzer.processProgramNode(programNode);
+        programNode.staticErrors.addAll(staticAnalyzer.processProgramNode(programNode));
 
         return programNode;
     }

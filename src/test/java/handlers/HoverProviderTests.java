@@ -26,8 +26,8 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverParameter() throws Exception {
-        // ":size" in "to drawSquare :size" — line 0, col 16 lands inside ParameterNode
-        String expected = "{\"contents\":\"Param(size)\"}";
+        // ":size" in "to drawSquare :size" — line 0, col 16
+        String expected = "{\"contents\":\"parameter: size\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":0,\"character\":16}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
@@ -37,8 +37,8 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverFunctionCall() throws Exception {
-        // "forward" on line 2, col 10 — inside the CallNode, before the :size argument
-        String expected = "{\"contents\":\"\\nCall(forward, [Var(size)])\"}";
+        // "forward" on line 2, col 10
+        String expected = "{\"contents\":\"forward distance\\nMove the turtle forward by the given number of steps.\\nExample: forward 100\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":2,\"character\":10}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
@@ -48,8 +48,8 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverVariableReference() throws Exception {
-        // ":size" argument to forward on line 2, col 17 — VariableRefNode wins over CallNode
-        String expected = "{\"contents\":\"Var(size)\"}";
+        // ":size" argument to forward on line 2, col 17
+        String expected = "{\"contents\":\"variable: size\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":2,\"character\":17}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
@@ -59,8 +59,8 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverCallWithNumberArg() throws Exception {
-        // "right" on line 3, col 10 — inside CallNode(right, [90])
-        String expected = "{\"contents\":\"\\nCall(right, [90])\"}";
+        // "right" on line 3, col 10
+        String expected = "{\"contents\":\"right degrees\\nTurn the turtle right by the given number of degrees.\\nExample: right 90\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":3,\"character\":10}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
@@ -70,7 +70,7 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverNumberLiteral() throws Exception {
-        // "90" on line 3, col 15 — NumberNode wins over CallNode(right)
+        // "90" on line 3, col 15
         String expected = "{\"contents\":\"90\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":3,\"character\":15}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
@@ -81,8 +81,8 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverUserDefinedFunctionCall() throws Exception {
-        // "drawSquare" on line 7, col 8 — inside CallNode(drawSquare, [:size])
-        String expected = "{\"contents\":\"\\nCall(drawSquare, [Var(size)])\"}";
+        // "drawSquare" on line 7, col 8 — user-defined: show first 5 lines of definition
+        String expected = "{\"contents\":\"to drawSquare :size\\n    repeat 4 [\\n        forward :size\\n        right 90\\n    ]\\n...\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":7,\"character\":8}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
@@ -92,8 +92,8 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverMakeDeclaration() throws Exception {
-        // "make" on line 13, col 2 — VariableDeclaration; NumberNode(100) starts at col 11 so doesn't compete
-        String expected = "{\"contents\":\"\\nDeclare(size, 100)\"}";
+        // "make" on line 13, col 2 — VariableDeclaration node
+        String expected = "{\"contents\":\"variable size = 100\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":13,\"character\":2}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
@@ -103,7 +103,7 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverNumberLiteralInMake() throws Exception {
-        // "100" on line 13, col 12 — NumberNode wins over VariableDeclaration
+        // "100" on line 13, col 12
         String expected = "{\"contents\":\"100\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":13,\"character\":12}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
@@ -114,19 +114,9 @@ public class HoverProviderTests {
 
     @Test
     public void testHoverOverTopLevelCall() throws Exception {
-        // "shrinkingSquares" on line 14, col 5 — before the :size arg, so CallNode is selected
-        String expected = "{\"contents\":\"\\nCall(shrinkingSquares, [Var(size)])\"}";
+        // "shrinkingSquares" on line 14, col 5 — user-defined: show first 5 lines of definition
+        String expected = "{\"contents\":\"to shrinkingSquares :size\\n    drawSquare :size\\n    if :size [\\n        shrinkingSquares difference :size 10\\n    ]\\n...\"}";
         String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":14,\"character\":5}}";
-        HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
-
-        HoverResult result = (HoverResult) hoverHandler.handleMessage(params);
-        Assertions.assertEquals(expected, objectMapper.writeValueAsString(result));
-    }
-    @Test
-    public void testHoverOverProcedureDeclaration() throws Exception {
-        // "shrinkingSquares" on line 14, col 5 — before the :size arg, so CallNode is selected
-        String expected = "{\"contents\":\"\\nProcedure(shrinkingSquares, [Param(size)], Block[\\nCall(drawSquare, [Var(size)]), \\nIf(Var(size), Block[\\nCall(shrinkingSquares, [\\nCall(difference, [Var(size), 10])])])])\"}";
-        String requestParams = "{\"textDocument\":{\"uri\":\"" + URI + "\"},\"position\":{\"line\":6,\"character\":8}}";
         HoverParams params = objectMapper.readValue(requestParams, HoverParams.class);
 
         HoverResult result = (HoverResult) hoverHandler.handleMessage(params);

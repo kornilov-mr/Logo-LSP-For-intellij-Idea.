@@ -11,11 +11,11 @@ public class FileNode {
 
     public String textContent;
     public List<String> contentLines;
-    public String fileUrl;
+    public final String fileUrl;
 
     
     public ProgramNode programNode;
-    public FunctionDeclarationTable functionDeclarations = new FunctionDeclarationTable();
+    public final FunctionDeclarationTable functionDeclarations = new FunctionDeclarationTable();
 
     public FileNode(String textContent, String fileUrl) {
         this.textContent = textContent;
@@ -47,7 +47,7 @@ public class FileNode {
                 // Add the part of the start line before the change
                 if (startLine < contentLines.size()) {
                     String startLineContent = contentLines.get(startLine);
-                    newContent.append(startLineContent.substring(0, Math.min(startChar, startLineContent.length())));
+                    newContent.append(startLineContent, 0, Math.min(startChar, startLineContent.length()));
                 }
 
                 // Add the new text
@@ -72,17 +72,5 @@ public class FileNode {
     }
     public void processNode() {
         this.programNode = ConvertToAST.convert(this);
-    }
-
-    private int getFunctionArity(String functionName) {
-        if(ProjectContext.standardFunctions.contains(functionName))
-            return ProjectContext.standardFunctions.getFunctionDeclaration(functionName).arity;
-        if(functionDeclarations.contains(functionName)){
-            return functionDeclarations.getFunctionDeclaration(functionName).arity;
-        }
-        return 0;
-    }
-    private boolean isProcedure(String functionName) {
-        return ProjectContext.standardFunctions.contains(functionName) || functionDeclarations.contains(functionName);
     }
 }

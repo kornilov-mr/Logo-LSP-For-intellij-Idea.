@@ -19,7 +19,7 @@ public class LspServerInfo {
         capabilities.hoverProvider = true;
         capabilities.completionProvider = new CompletionOptions(new String[]{":"},new String[]{},true,null);
         capabilities.textDocumentSync = 2;
-        capabilities.semanticTokensProvider = new SemanticTokensOptions(SEMANTIC_TOKENS_LEGEND, true);
+        capabilities.semanticTokensProvider = new SemanticTokensOptions(SEMANTIC_TOKENS_LEGEND, true,true);
         capabilities.declarationProvider = true;
         capabilities.diagnosticProvider = new DiagnosticOptions(false, false);
         return capabilities;
