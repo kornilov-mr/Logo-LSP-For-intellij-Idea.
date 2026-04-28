@@ -79,8 +79,8 @@ list
  * Keywords
  */
 
-TO      : 'to';
-END     : 'end';
+TO      : [tT][oO];
+END     : [eE][nN][dD];
 
 /*
  * Variable reference

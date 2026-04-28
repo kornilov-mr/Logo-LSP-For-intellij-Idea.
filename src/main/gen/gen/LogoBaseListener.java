@@ -1,4 +1,5 @@
-package gen;// Generated from C:/Users/korni/IdeaProjects/LogoSupport/src/main/java/org/example/project/parser/Logo.g4 by ANTLR 4.13.2
+// Generated from C:/Users/korni/IdeaProjects/LogoSupport/src/main/java/org/example/project/parser/Logo.g4 by ANTLR 4.13.2
+package gen;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
