@@ -45,13 +45,13 @@ public class TextDocumentCompletionHandler extends LSPHandler<CompletionParams, 
         List<CompletionItem> items = new ArrayList<>();
 
         for (Map.Entry<String, UserVariableDeclaration> pair : scope.declaredVariables.entrySet()) {
-            CompletionItem item = new CompletionItem(pair.getKey());
+            CompletionItem item = new CompletionItem(pair.getValue().name);
             item.kind = CompletionItemKind.Variable;
             items.add(item);
         }
 
         scope.localFunctionDeclarations.declarationsMap.forEach((name, declaration) -> {
-            CompletionItem item = new CompletionItem(name);
+            CompletionItem item = new CompletionItem(declaration.name);
             item.kind = CompletionItemKind.Function;
             items.add(item);
         });
