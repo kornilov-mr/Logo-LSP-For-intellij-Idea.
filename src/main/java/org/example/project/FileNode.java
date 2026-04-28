@@ -11,15 +11,13 @@ public class FileNode {
 
     public String textContent;
     public List<String> contentLines;
-    public final String fileUrl;
 
     
     public ProgramNode programNode;
     public final FunctionDeclarationTable functionDeclarations = new FunctionDeclarationTable();
 
-    public FileNode(String textContent, String fileUrl) {
+    public FileNode(String textContent) {
         this.textContent = textContent;
-        this.fileUrl = fileUrl;
         this.contentLines = new ArrayList<>(List.of(textContent.split("\n")));
     }
 

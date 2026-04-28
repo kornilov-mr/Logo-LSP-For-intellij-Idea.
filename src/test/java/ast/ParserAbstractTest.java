@@ -24,10 +24,10 @@ public class ParserAbstractTest {
         return new File(pathToExpected);
     }
 
-    public ProgramNode parseFileNodeAndGetScopes(FileNode fileNode, boolean writeExpected) {
+    public ProgramNode parseFileNodeAndGetScopes(FileNode fileNode,String fileUrl, boolean writeExpected) {
         ProgramNode nodes = ConvertToAST.convert(fileNode);
         if (writeExpected) {
-            File expected = resolveFileFromLogoToTxt(new File(fileNode.fileUrl));
+            File expected = resolveFileFromLogoToTxt(new File(fileUrl));
             try {
                 expected.delete();
                 Files.createFile(expected.toPath());
@@ -40,10 +40,10 @@ public class ParserAbstractTest {
         return nodes;
     }
 
-    public ProgramNode parseFileNode(FileNode fileNode, boolean writeExpected) {
+    public ProgramNode parseFileNode(FileNode fileNode,String fileUrl, boolean writeExpected) {
         ProgramNode nodes = ConvertToAST.convert(fileNode);
         if (writeExpected) {
-            File expected = resolveFileFromLogoToTxt(new File(fileNode.fileUrl));
+            File expected = resolveFileFromLogoToTxt(new File(fileUrl));
             try {
                 expected.delete();
                 Files.createFile(expected.toPath());
@@ -60,7 +60,7 @@ public class ParserAbstractTest {
         String logo = Files.readString(logoFile.toPath().toAbsolutePath());
         String expected = Files.readString(resolveFileFromLogoToTxt(logoFile).toPath());
 
-        ProgramNode programNode = parseFileNodeAndGetScopes(new FileNode(logo, logoFile.getAbsolutePath()), writeExpected);
+        ProgramNode programNode = parseFileNodeAndGetScopes(new FileNode(logo), logoFile.getAbsolutePath(), writeExpected);
 
         Assertions.assertEquals(expected, ScopeBuilder.PrintAllScopesInProgram(programNode));
 
@@ -70,7 +70,7 @@ public class ParserAbstractTest {
         String logo = Files.readString(logoFile.toPath().toAbsolutePath());
         String expected = Files.readString(resolveFileFromLogoToTxt(logoFile).toPath());
 
-        ProgramNode programNode = parseFileNode(new FileNode(logo, logoFile.getAbsolutePath()), writeExpected);
+        ProgramNode programNode = parseFileNode(new FileNode(logo),logoFile.getAbsolutePath(), writeExpected);
 
         Assertions.assertEquals(expected, programNode.toString());
     }

@@ -36,7 +36,7 @@ class GetNodeAtPositionTests {
     private static final String PROGRAM_B = "to sq :n\n  forward :n\nend";
 
     private static ProgramNode parse(String source) {
-        return ConvertToAST.convert(new FileNode(source, "test.logo"));
+        return ConvertToAST.convert(new FileNode(source));
     }
 
     // -------------------------------------------------------------------------

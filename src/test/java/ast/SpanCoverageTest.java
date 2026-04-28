@@ -45,7 +45,7 @@ class SpanCoverageTest {
         for (File logoFile : files) {
             String source = Files.readString(logoFile.toPath());
             ProgramNode program = ConvertToAST.convert(
-                    new FileNode(source, logoFile.getAbsolutePath()));
+                    new FileNode(source));
 
             List<ASTNode> nodes = program.getDescendants().stream()
                     .filter(n -> n.range != null

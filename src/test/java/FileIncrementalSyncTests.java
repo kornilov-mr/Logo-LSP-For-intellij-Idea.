@@ -14,7 +14,7 @@ public class FileIncrementalSyncTests {
     public void testFileIncrementalSyncSingleRangeOneLine() {
         String expected = "Test New content check if one range works";
 
-        FileNode fileNode = new FileNode("Test Content check if one range works", "test");
+        FileNode fileNode = new FileNode("Test Content check if one range works");
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         changes.add(new TextDocumentContentChangeEvent(
                 new Range(new Position(0, 5), new Position(0, 12)),
@@ -29,7 +29,7 @@ public class FileIncrementalSyncTests {
     @Test
     public void testMultipleChanges() {
         String initial = "Line one\nLine two\nLine three";
-        FileNode fileNode = new FileNode(initial, "test");
+        FileNode fileNode = new FileNode(initial);
 
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         // First change: replace "one" with "1"
@@ -51,7 +51,7 @@ public class FileIncrementalSyncTests {
     @Test
     public void testMultipleContentLines() {
         String initial = "First line\nSecond line\nThird line\nFourth line";
-        FileNode fileNode = new FileNode(initial, "test");
+        FileNode fileNode = new FileNode(initial);
 
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         // Replace "Second line\nThird" with "MODIFIED"
@@ -69,7 +69,7 @@ public class FileIncrementalSyncTests {
     @Test
     public void testChangesWhichAddLines() {
         String initial = "Line one\nLine two";
-        FileNode fileNode = new FileNode(initial, "test");
+        FileNode fileNode = new FileNode(initial);
 
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         // Insert new lines between "one" and "Line two"
@@ -87,7 +87,7 @@ public class FileIncrementalSyncTests {
     @Test
     public void testChangesAppliedSequentially() {
         String initial = "ABCDEF";
-        FileNode fileNode = new FileNode(initial, "test");
+        FileNode fileNode = new FileNode(initial);
 
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         // First change: insert "1" after "ABC"
@@ -110,7 +110,7 @@ public class FileIncrementalSyncTests {
     @Test
     public void testAddLinesAtBeginning() {
         String initial = "Original content";
-        FileNode fileNode = new FileNode(initial, "test");
+        FileNode fileNode = new FileNode(initial);
 
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         changes.add(new TextDocumentContentChangeEvent(
@@ -126,7 +126,7 @@ public class FileIncrementalSyncTests {
     @Test
     public void testAddLinesAtEnd() {
         String initial = "Original content";
-        FileNode fileNode = new FileNode(initial, "test");
+        FileNode fileNode = new FileNode(initial);
 
         List<TextDocumentContentChangeEvent> changes = new ArrayList<>();
         changes.add(new TextDocumentContentChangeEvent(
