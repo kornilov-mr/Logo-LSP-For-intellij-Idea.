@@ -33,7 +33,7 @@ public class InitializationHandlerTests {
         Assertions.assertNotNull(result.capabilities.completionProvider);
         Assertions.assertTrue(result.capabilities.completionProvider.resolveProvider);
         // Colon triggers completion for variable references
-        Assertions.assertArrayEquals(new String[]{":"}, result.capabilities.completionProvider.triggerCharacters);
+        Assertions.assertArrayEquals(new String[]{":","\""}, result.capabilities.completionProvider.triggerCharacters);
     }
 
     @Test

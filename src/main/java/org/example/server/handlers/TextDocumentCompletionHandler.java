@@ -42,6 +42,9 @@ public class TextDocumentCompletionHandler extends LSPHandler<CompletionParams, 
         ASTNode node = programNode.getNodesInSpan(params.position);
         LocalScope scope = node.scope;
 
+        String trigger = params.context != null ? params.context.triggerCharacter : null;
+        boolean variableOnly = ":".equals(trigger) || "\"".equals(trigger);
+
         List<CompletionItem> items = new ArrayList<>();
 
         for (Map.Entry<String, UserVariableDeclaration> pair : scope.declaredVariables.entrySet()) {
@@ -50,17 +53,19 @@ public class TextDocumentCompletionHandler extends LSPHandler<CompletionParams, 
             items.add(item);
         }
 
-        scope.localFunctionDeclarations.declarationsMap.forEach((name, declaration) -> {
-            CompletionItem item = new CompletionItem(declaration.name);
-            item.kind = CompletionItemKind.Function;
-            items.add(item);
-        });
+        if (!variableOnly) {
+            scope.localFunctionDeclarations.declarationsMap.forEach((name, declaration) -> {
+                CompletionItem item = new CompletionItem(declaration.name);
+                item.kind = CompletionItemKind.Function;
+                items.add(item);
+            });
 
-        StandardFunctionDeclaration.getDeclaration().declarationsMap.forEach((name, declaration) -> {
-            CompletionItem item = new CompletionItem(name);
-            item.kind = CompletionItemKind.Function;
-            items.add(item);
-        });
+            StandardFunctionDeclaration.getDeclaration().declarationsMap.forEach((name, declaration) -> {
+                CompletionItem item = new CompletionItem(name);
+                item.kind = CompletionItemKind.Function;
+                items.add(item);
+            });
+        }
 
         return new CompletionList(false, null, items.toArray(new CompletionItem[0]));
     }

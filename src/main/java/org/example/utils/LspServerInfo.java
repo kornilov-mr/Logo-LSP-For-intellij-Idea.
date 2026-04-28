@@ -18,7 +18,7 @@ public class LspServerInfo {
     public static ServerCapabilities getDefaultCapabilities(){
         ServerCapabilities capabilities = new ServerCapabilities();
         capabilities.hoverProvider = true;
-        capabilities.completionProvider = new CompletionOptions(new String[]{":"},new String[]{},true,null);
+        capabilities.completionProvider = new CompletionOptions(new String[]{":", "\""},new String[]{},true,null);
         capabilities.textDocumentSync = new TextDocumentSyncOptions(true, 2);
         capabilities.semanticTokensProvider = new SemanticTokensOptions(SEMANTIC_TOKENS_LEGEND, true,true);
         capabilities.declarationProvider = true;
