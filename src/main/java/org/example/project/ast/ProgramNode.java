@@ -1,11 +1,9 @@
 package org.example.project.ast;
 
-import org.antlr.v4.runtime.misc.Pair;
 import org.example.communication.DTO.Position;
 import org.example.communication.DTO.Range;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class ProgramNode extends ASTNode {
@@ -20,29 +18,35 @@ public class ProgramNode extends ASTNode {
 
     public ASTNode getNodesInSpan(Position position) {
         List<ASTNode> nodes = this.getDescendants();
-        List<Pair<Pair<Integer, Integer>,ASTNode>> nodesInsideTheSpan = new ArrayList<>();
+
+        ASTNode best = null;
+        int bestLines = Integer.MAX_VALUE;
+        int bestChars = Integer.MAX_VALUE;
+
         for (ASTNode node : nodes) {
-            if((node.getSpan().start.line == position.line && node.getSpan().end.line == position.line) &&
-            !(node.getSpan().start.character <= position.character && node.getSpan().end.character >= position.character)){
-                continue;
-            }
-            if (node.getSpan().start.line == position.line && node.getSpan().end.line == position.line &&
-                    node.getSpan().start.character <= position.character && node.getSpan().end.character >= position.character) {
-                    nodesInsideTheSpan.add(new Pair<>(new Pair<>(0, node.getSpan().end.character - node.getSpan().start.character), node));
-            }
-            if((node.getSpan().start.line == position.line && node.getSpan().start.character <= position.character)||
-                    (node.getSpan().end.line == position.line && node.getSpan().end.character >= position.character)||
-                    (node.getSpan().start.line < position.line && node.getSpan().end.line > position.line)) {
-                int lines = node.getSpan().end.line - node.getSpan().start.line;
-                int size = node.getSpan().end.character - node.getSpan().start.character;
-                nodesInsideTheSpan.add(new Pair<>(new Pair<>(lines, size), node));
+            Range span = node.getSpan();
+            if (!containsPosition(span, position)) continue;
+
+            int lines = span.end.line - span.start.line;
+            int chars = span.end.character - span.start.character;
+
+            if (lines < bestLines || (lines == bestLines && chars < bestChars)) {
+                best = node;
+                bestLines = lines;
+                bestChars = chars;
             }
         }
-        if(nodesInsideTheSpan.isEmpty())
-            return nodes.getLast();
-        nodesInsideTheSpan.sort(Comparator.comparingInt((Pair<Pair<Integer, Integer>, ASTNode> a) -> a.a.a).thenComparingInt(a -> a.a.b));
-        return nodesInsideTheSpan.getFirst().b;
-}
+
+        return best != null ? best : nodes.getLast();
+    }
+
+    private static boolean containsPosition(Range span, Position pos) {
+        boolean afterStart = span.start.line < pos.line
+                || (span.start.line == pos.line && span.start.character <= pos.character);
+        boolean beforeEnd = span.end.line > pos.line
+                || (span.end.line == pos.line && span.end.character >= pos.character);
+        return afterStart && beforeEnd;
+    }
 
 @Override
 public Range getSpan() {
