@@ -23,7 +23,7 @@ public class FileNode {
         this.contentLines = new ArrayList<>(List.of(textContent.split("\n")));
     }
 
-    public void applyChanges(List<TextDocumentContentChangeEvent> changes) {
+    public synchronized void applyChanges(List<TextDocumentContentChangeEvent> changes) {
         for (TextDocumentContentChangeEvent change : changes) {
             if (change.range == null) {
                 // Full document update
