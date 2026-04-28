@@ -17,21 +17,24 @@ public class LogoLSPServer {
     static void main(String[] args) {
         LogoLSPServer server = new LogoLSPServer();
         server.start();
+        System.exit(WorkingContext.isShutdown ? 0 : 1);
     }
 
     public void start() {
-        JsonRPCScanner scanner = new JsonRPCScanner(System.in);
+        start(System.in, System.out);
+    }
+
+    public void start(InputStream in, PrintStream out) {
+        JsonRPCScanner scanner = new JsonRPCScanner(in);
         while (true) {
             String jsonRPC;
             try {
                 jsonRPC = scanner.readNextRPCJson();
             } catch (EOFException e) {
                 logger.info("Client closed connection");
-                System.exit(WorkingContext.isShutdown ? 0 : 1);
                 return;
             } catch (IOException e) {
                 logger.severe("IO error reading from client: " + e.getMessage());
-                System.exit(1);
                 return;
             }
             try {
@@ -43,8 +46,8 @@ public class LogoLSPServer {
                 LSPResponseWrapper lspResponse = new LSPResponseWrapper(lspMessage.id, result);
                 String encodedLspResponse = EncodingMessage.encodeToJsonRPC(lspResponse);
                 logger.info("Sending response: " + encodedLspResponse);
-                System.out.print(encodedLspResponse);
-                System.out.flush();
+                out.print(encodedLspResponse);
+                out.flush();
             } catch (Exception e) {
                 logger.severe("Error processing message: " + e.getMessage());
             }
