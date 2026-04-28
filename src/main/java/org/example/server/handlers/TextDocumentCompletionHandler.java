@@ -65,6 +65,9 @@ public class TextDocumentCompletionHandler extends LSPHandler<CompletionParams, 
                 item.kind = CompletionItemKind.Function;
                 items.add(item);
             });
+            //Since we also have keywords
+            items.add(new CompletionItem("to"));
+            items.add(new CompletionItem("end"));
         }
 
         return new CompletionList(false, null, items.toArray(new CompletionItem[0]));
