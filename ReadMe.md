@@ -10,6 +10,7 @@
 - **Syntax highlighting** - colors keywords, built-in commands, variables, numbers, strings, operators, and comments via semantic tokens.
 - **Go-to-declaration** - jump to the `make`/parameter definition for a `:variable`, or to the `to` block for a procedure name.
 - **Hover**  - while hovering over a procedure name, displays it's body, or a description and examples or usage for built-in procedures.
+- **Document symbols** - outline view listing all procedures (with their parameters as children) and top-level variables; powers the Structure panel and breadcrumb navigation in IntelliJ.
 
 ![logo.gif](logo.gif)![usage example gif.gif](usage%20example%20gif.gif)
 ## Build & run
@@ -84,7 +85,7 @@ Processing is triggered on `textDocument/didOpen` and `textDocument/didChange` a
 ### Step 1 — ANTLR lex + parse
 
 Antlr is used to create a shallow structure and handle whitespace, unexpected characters, defined listeners, etc.
-Because Logo requires additional resolve based on function arity, the [grammar](src/main/java/org/example/project/parser/Logo.g4) for expression is deliberately permissive.
+Because Logo requires additional resolve based on function arity, the [grammar](src/main/antlr4/gen/Logo.g4) for expression is deliberately permissive.
 ```antlrv4
 expression
     : atom+

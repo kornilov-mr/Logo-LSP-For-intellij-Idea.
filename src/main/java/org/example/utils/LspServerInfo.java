@@ -22,6 +22,7 @@ public class LspServerInfo {
         capabilities.textDocumentSync = new TextDocumentSyncOptions(true, 2);
         capabilities.semanticTokensProvider = new SemanticTokensOptions(SEMANTIC_TOKENS_LEGEND, true,true);
         capabilities.declarationProvider = true;
+        capabilities.documentSymbolProvider = true;
         capabilities.diagnosticProvider = new DiagnosticOptions(false, false);
         return capabilities;
     }
