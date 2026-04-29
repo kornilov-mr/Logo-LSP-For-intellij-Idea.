@@ -36,46 +36,12 @@ java -jar target/LogoSupport-1.0-SNAPSHOT.jar
 ## Project structure
 
 ![LSPServerArchitecture.drawio.svg](LSPServerArchitecture.drawio.svg)
-```
 
-src/main/java/org/example/
-├── server/
-│   ├── LogoLSPServer.java          # entry point — reads JSON-RPC from stdin
-│   ├── MessageDispatcher.java      # routes messages to handlers by method name
-│   ├── EndPointContext.java        # enum of all supported LSP methods
-│   ├── JsonRPCScanner.java         # Content-Length framed message reader
-│   └── handlers/                  # one class per LSP method
-│
-├── project/
-│   ├── FileNode.java               # open file: text content + parsed AST
-│   ├── ProjectContext.java         # in-memory registry of open files
-│   ├── FunctionDeclaration.java    # metadata for a function (arity, kind, description)
-│   ├── FunctionDeclarationTable.java
-│   └── StandardLogoFunctions.java  # 150+ built-in Logo functions
-│
-├── project/ast/
-│   ├── ConvertToAST.java           # orchestrates the full parse → AST → analysis pipeline
-│   ├── ASTNode.java                # base class; carries Range + LocalScope
-│   └── *.java                      # node types: ProcedureDeclarationNode, CallNode,
-│                                   #   RepeatNode, IfNode, IfElseNode, WhileNode,
-│                                   #   BinaryExpressionNode, VariableRefNode, …
-│
-├── project/parser/
-│   ├── Logo.g4                     # ANTLR grammar (intentionally permissive)
-│   ├── LogoArityResolverListener.java  # ANTLR listener that builds the AST
-│   └── LogoSyntaxErrorCollector.java
-│
-├── project/staticAnalyser/
-│   ├── StaticAnalyzer.java         # detects undefined functions and variables
-│   └── ScopeBuilder.java           # assigns LocalScope to every ASTNode
-│
-└── communication/                  # LSP protocol DTOs (Position, Range, Diagnostic, …)
 
-src/main/java/gen/                  # ANTLR-generated code — do not edit manually
-src/test/resources/ast/programs/    # Logo source fixtures used by tests
-```
 
 ---
+At the start the Handler architecture was written with multithreading in mind, though I decided not go further with that idea, 
+because Logo files aren't connected and usually pretty small.
 
 ## How Logo is parsed
 
